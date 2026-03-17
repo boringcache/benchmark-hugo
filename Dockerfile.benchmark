@@ -11,7 +11,7 @@
 # Usage:
 #   docker buildx build \
 #     --secret id=boringcache_token,env=BORINGCACHE_API_TOKEN \
-#     --build-arg BORINGCACHE_WORKSPACE=boringcache/benchmark-hugo \
+#     --build-arg BORINGCACHE_WORKSPACE=boringcache/benchmarks \
 #     -f Dockerfile.benchmark .
 
 ARG GO_VERSION="1.26"
@@ -23,7 +23,7 @@ FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS g
 FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS gorun
 
 # BoringCache workspace for caching deps across builds
-ARG BORINGCACHE_WORKSPACE="boringcache/benchmark-hugo"
+ARG BORINGCACHE_WORKSPACE="boringcache/benchmarks"
 ARG BORINGCACHE_TAG_GOMOD="hugo-gomod"
 ARG BORINGCACHE_TAG_GOBUILD="hugo-gobuild"
 ARG BORINGCACHE_INTERNAL_RESTORE_ENABLED="1"
