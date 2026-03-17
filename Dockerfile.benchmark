@@ -1,0 +1,141 @@
+# syntax=docker/dockerfile:1.18
+#
+# Hugo Dockerfile optimized with BoringCache
+# Based on upstream gohugoio/hugo Dockerfile
+#
+# Key changes:
+# - BoringCache CLI caches Go module cache across builds
+# - BoringCache CLI caches Go build cache across builds
+# - Even on cold Docker builds, go build restores from BoringCache
+#
+# Usage:
+#   docker buildx build \
+#     --secret id=boringcache_token,env=BORINGCACHE_API_TOKEN \
+#     --build-arg BORINGCACHE_WORKSPACE=boringcache/benchmark-hugo \
+#     -f Dockerfile.benchmark .
+
+ARG GO_VERSION="1.26"
+ARG ALPINE_VERSION="3.22"
+ARG DART_SASS_VERSION="1.79.3"
+
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.5.0 AS xx
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS gobuild
+FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS gorun
+
+# BoringCache workspace for caching deps across builds
+ARG BORINGCACHE_WORKSPACE="boringcache/benchmark-hugo"
+ARG BORINGCACHE_TAG_GOMOD="hugo-gomod"
+ARG BORINGCACHE_TAG_GOBUILD="hugo-gobuild"
+ARG BORINGCACHE_INTERNAL_RESTORE_ENABLED="1"
+ARG BORINGCACHE_INTERNAL_SAVE_ENABLED="1"
+
+FROM gobuild AS build
+
+RUN apk add clang lld
+
+# Set up cross-compilation helpers
+COPY --from=xx / /
+
+ARG TARGETPLATFORM
+RUN xx-apk add musl-dev gcc g++
+
+ARG HUGO_BUILD_TAGS="extended"
+ENV CGO_ENABLED=1
+ENV GOPROXY=https://proxy.golang.org
+ENV GOCACHE=/root/.cache/go-build
+ENV GOMODCACHE=/go/pkg/mod
+ARG BORINGCACHE_WORKSPACE
+ARG BORINGCACHE_TAG_GOMOD
+ARG BORINGCACHE_TAG_GOBUILD
+ARG BORINGCACHE_INTERNAL_RESTORE_ENABLED
+ARG BORINGCACHE_INTERNAL_SAVE_ENABLED
+
+# Restore Go module cache from BoringCache
+RUN --mount=type=secret,id=boringcache_token \
+    --mount=type=bind,source=boringcache-bin,target=/usr/local/bin/boringcache \
+    export BORINGCACHE_API_TOKEN="$(cat /run/secrets/boringcache_token)" && \
+    if [ "$BORINGCACHE_INTERNAL_RESTORE_ENABLED" = "1" ]; then \
+      boringcache restore --no-git "$BORINGCACHE_WORKSPACE" "${BORINGCACHE_TAG_GOMOD}:/go/pkg/mod" || true; \
+    fi
+
+# Restore Go build cache from BoringCache
+RUN --mount=type=secret,id=boringcache_token \
+    --mount=type=bind,source=boringcache-bin,target=/usr/local/bin/boringcache \
+    export BORINGCACHE_API_TOKEN="$(cat /run/secrets/boringcache_token)" && \
+    if [ "$BORINGCACHE_INTERNAL_RESTORE_ENABLED" = "1" ]; then \
+      boringcache restore --no-git "$BORINGCACHE_WORKSPACE" "${BORINGCACHE_TAG_GOBUILD}:/root/.cache/go-build" || true; \
+    fi
+
+WORKDIR /go/src/github.com/gohugoio/hugo
+
+# Build Hugo (go modules and build cache pre-populated from BoringCache)
+RUN --mount=type=bind,source=upstream,target=. <<EOT
+    set -ex
+    xx-go build -tags "$HUGO_BUILD_TAGS" -ldflags "-s -w -X github.com/gohugoio/hugo/common/hugo.vendorInfo=docker" -o /usr/bin/hugo
+    xx-verify /usr/bin/hugo
+EOT
+
+# Save Go module cache to BoringCache
+RUN --mount=type=secret,id=boringcache_token \
+    --mount=type=secret,id=boringcache_save_token \
+    --mount=type=bind,source=boringcache-bin,target=/usr/local/bin/boringcache \
+    export BORINGCACHE_API_TOKEN="$(cat /run/secrets/boringcache_token)" && \
+    save_token="$(cat /run/secrets/boringcache_save_token 2>/dev/null || true)" && \
+    if [ -n "$save_token" ]; then \
+      boringcache save --no-git "$BORINGCACHE_WORKSPACE" "${BORINGCACHE_TAG_GOMOD}:/go/pkg/mod"; \
+    fi
+
+# Save Go build cache to BoringCache
+RUN --mount=type=secret,id=boringcache_token \
+    --mount=type=secret,id=boringcache_save_token \
+    --mount=type=bind,source=boringcache-bin,target=/usr/local/bin/boringcache \
+    export BORINGCACHE_API_TOKEN="$(cat /run/secrets/boringcache_token)" && \
+    save_token="$(cat /run/secrets/boringcache_save_token 2>/dev/null || true)" && \
+    if [ -n "$save_token" ]; then \
+      boringcache save --no-git "$BORINGCACHE_WORKSPACE" "${BORINGCACHE_TAG_GOBUILD}:/root/.cache/go-build"; \
+    fi
+
+# dart-sass downloads the dart-sass runtime dependency
+FROM alpine:${ALPINE_VERSION} AS dart-sass
+ARG TARGETARCH
+ARG DART_SASS_VERSION
+ARG DART_ARCH=${TARGETARCH/amd64/x64}
+WORKDIR /out
+ADD https://github.com/sass/dart-sass/releases/download/${DART_SASS_VERSION}/dart-sass-${DART_SASS_VERSION}-linux-${DART_ARCH}.tar.gz .
+RUN tar -xf dart-sass-${DART_SASS_VERSION}-linux-${DART_ARCH}.tar.gz
+
+FROM gorun AS final
+
+COPY --from=build /usr/bin/hugo /usr/bin/hugo
+
+RUN apk add --no-cache \
+    libc6-compat \
+    git \
+    runuser \
+    nodejs \
+    npm \
+    openssh-client \
+    tar
+
+RUN mkdir -p /var/hugo/bin /cache && \
+    addgroup -Sg 1000 hugo && \
+    adduser -Sg hugo -u 1000 -h /var/hugo hugo && \
+    chown -R hugo: /var/hugo /cache && \
+    runuser -u hugo -- git config --global --add safe.directory /project && \
+    runuser -u hugo -- git config --global core.quotepath false
+
+USER hugo:hugo
+VOLUME /project
+WORKDIR /project
+ENV HUGO_CACHEDIR=/cache
+ENV PATH="/var/hugo/bin:$PATH"
+
+COPY upstream/scripts/docker/entrypoint.sh /entrypoint.sh
+COPY --from=dart-sass /out/dart-sass /var/hugo/bin/dart-sass
+
+ENV PATH="/var/hugo/bin/dart-sass:$PATH"
+
+EXPOSE 1313
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["--help"]

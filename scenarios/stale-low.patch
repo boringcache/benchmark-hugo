@@ -1,0 +1,10 @@
+diff --git a/main.go b/main.go
+index 70c87bd..cd84dc3 100644
+--- a/main.go
++++ b/main.go
+@@ -33,3 +33,5 @@ func main() {
+ 		os.Exit(1)
+ 	}
+ }
++
++// benchmark stale mutation pinned

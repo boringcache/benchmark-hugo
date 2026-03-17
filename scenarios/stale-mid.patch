@@ -1,0 +1,10 @@
+diff --git a/go.mod b/go.mod
+index a20a0d0..d67f8e2 100644
+--- a/go.mod
++++ b/go.mod
+@@ -192,3 +192,5 @@ require (
+ )
+ 
+ go 1.25.0
++
++// benchmark stale pinned
