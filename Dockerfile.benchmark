@@ -80,7 +80,9 @@ RUN --mount=type=secret,id=boringcache_token \
     --mount=type=secret,id=boringcache_save_token \
     --mount=type=bind,source=boringcache-bin,target=/usr/local/bin/boringcache \
     export BORINGCACHE_API_TOKEN="$(cat /run/secrets/boringcache_token)" && \
+    export BORINGCACHE_RESTORE_TOKEN="${BORINGCACHE_API_TOKEN}" && \
     save_token="$(cat /run/secrets/boringcache_save_token 2>/dev/null || true)" && \
+    export BORINGCACHE_SAVE_TOKEN="${save_token}" && \
     if [ -n "$save_token" ]; then \
       boringcache save --no-git "$BORINGCACHE_WORKSPACE" "${BORINGCACHE_TAG_GOMOD}:/go/pkg/mod"; \
     fi
@@ -90,7 +92,9 @@ RUN --mount=type=secret,id=boringcache_token \
     --mount=type=secret,id=boringcache_save_token \
     --mount=type=bind,source=boringcache-bin,target=/usr/local/bin/boringcache \
     export BORINGCACHE_API_TOKEN="$(cat /run/secrets/boringcache_token)" && \
+    export BORINGCACHE_RESTORE_TOKEN="${BORINGCACHE_API_TOKEN}" && \
     save_token="$(cat /run/secrets/boringcache_save_token 2>/dev/null || true)" && \
+    export BORINGCACHE_SAVE_TOKEN="${save_token}" && \
     if [ -n "$save_token" ]; then \
       boringcache save --no-git "$BORINGCACHE_WORKSPACE" "${BORINGCACHE_TAG_GOBUILD}:/root/.cache/go-build"; \
     fi
