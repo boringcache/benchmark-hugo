@@ -91,8 +91,10 @@ jobs:
           gomod_tag="hugo-gomod-${run_suffix}"
           gobuild_tag="hugo-gobuild-${run_suffix}"
           tags_csv="${gomod_tag},${gobuild_tag},${cache_scope},${docker_registry_tag}"
+          registry_proxy_tags="${cache_scope},${docker_registry_tag}"
           echo "cache_scope=${cache_scope}" >> "$GITHUB_OUTPUT"
           echo "docker_registry_tag=${docker_registry_tag}" >> "$GITHUB_OUTPUT"
+          echo "registry_proxy_tags=${registry_proxy_tags}" >> "$GITHUB_OUTPUT"
           echo "gomod_tag=${gomod_tag}" >> "$GITHUB_OUTPUT"
           echo "gobuild_tag=${gobuild_tag}" >> "$GITHUB_OUTPUT"
           echo "tags_csv=${tags_csv}" >> "$GITHUB_OUTPUT"
@@ -229,7 +231,7 @@ jobs:
           docker-command: setup
           workspace: ${{ env.BENCHMARK_WORKSPACE }}
           cache-tag: ${{ steps.scope.outputs.cache_scope }}
-          registry-tag: ${{ steps.scope.outputs.docker_registry_tag }}
+          registry-tag: ${{ steps.scope.outputs.registry_proxy_tags }}
           proxy-no-git: 'true'
           driver-opts: |
             network=host
@@ -304,8 +306,10 @@ jobs:
           gomod_tag="hugo-gomod-${run_suffix}"
           gobuild_tag="hugo-gobuild-${run_suffix}"
           tags_csv="${gomod_tag},${gobuild_tag},${cache_scope},${docker_registry_tag}"
+          registry_proxy_tags="${cache_scope},${docker_registry_tag}"
           echo "cache_scope=${cache_scope}" >> "$GITHUB_OUTPUT"
           echo "docker_registry_tag=${docker_registry_tag}" >> "$GITHUB_OUTPUT"
+          echo "registry_proxy_tags=${registry_proxy_tags}" >> "$GITHUB_OUTPUT"
           echo "gomod_tag=${gomod_tag}" >> "$GITHUB_OUTPUT"
           echo "gobuild_tag=${gobuild_tag}" >> "$GITHUB_OUTPUT"
           echo "tags_csv=${tags_csv}" >> "$GITHUB_OUTPUT"
@@ -442,7 +446,7 @@ jobs:
           docker-command: setup
           workspace: ${{ env.BENCHMARK_WORKSPACE }}
           cache-tag: ${{ needs.seed-cache.outputs.cache_scope }}
-          registry-tag: ${{ steps.scope.outputs.docker_registry_tag }}
+          registry-tag: ${{ steps.scope.outputs.registry_proxy_tags }}
           proxy-no-git: 'true'
           read-only: true
           driver-opts: |
