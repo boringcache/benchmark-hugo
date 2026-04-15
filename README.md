@@ -7,26 +7,21 @@ This repo exists separately from the central benchmarks publisher so Hugo can ha
 - a pinned upstream source commit
 - isolated GitHub Actions cache usage
 - one shared BoringCache workspace name: `boringcache/benchmarks`
-- independent nightly benchmark runs
+- independent benchmark runs triggered by upstream sync commits and the nightly schedule
 
 ## Source Model
 
 - upstream app source lives in the pinned `upstream/` submodule
 - `Dockerfile.benchmark` is benchmark-owned and committed here
-- stale scenarios are committed patches in `scenarios/`
 
 Pinned upstream source:
 
-- `gohugoio/hugo@49bfb1070be5aaa2a98fecc95560346ba3d71281`
+- see committed `upstream/` submodule on `main`
 
 ## Scenarios
 
 - `cold`
 - `warm1`
-- `warm2`
-- `stale-low`: one Go source file change
-- `stale-mid`: one `go.mod` metadata change
-- `layer-miss`: `--no-cache` Docker rebuild on the same pinned tree
 
 ## Output
 
