@@ -82,7 +82,7 @@ jobs:
           setup: none
           mode: archive
           workspace: ${{ env.BENCHMARK_WORKSPACE }}
-          cli-platform: linux-amd64
+          cli-platform: linux-musl-amd64
           cache-runtime: false
 
       - name: Prepare benchmark build inputs
@@ -293,7 +293,7 @@ jobs:
           setup: none
           mode: archive
           workspace: ${{ env.BENCHMARK_WORKSPACE }}
-          cli-platform: linux-amd64
+          cli-platform: linux-musl-amd64
           cache-runtime: false
 
       - name: Prepare benchmark build inputs
@@ -621,7 +621,7 @@ jobs:
           setup: none
           mode: archive
           workspace: ${{ env.BENCHMARK_WORKSPACE }}
-          cli-platform: linux-amd64
+          cli-platform: linux-musl-amd64
           cache-runtime: false
 
       - name: Download scenario timing artifacts
