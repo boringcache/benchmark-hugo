@@ -12,7 +12,7 @@ This repo exists separately from the central benchmarks publisher so Hugo can ha
 ## Source Model
 
 - upstream app source lives in the pinned `upstream/` submodule
-- `Dockerfile.benchmark` is benchmark-owned and committed here
+- workflows build the upstream Dockerfile with `upstream/` as the Docker context
 
 Pinned upstream source:
 
