@@ -115,6 +115,10 @@ jobs:
           image_tag: hugo-benchmark:latest
           cli_platform: linux-musl-amd64
           benchmark_workspace: ${{ github.repository }}
+
+  # No Docker +toolcache lanes here yet: Hugo's Dockerfile uses Go build cache
+  # mounts, while the Docker tool-cache adapter currently supports turbo/nx/
+  # sccache only. Do not add a fake lane that changes the build graph.
   boringcache-native:
     name: BC Native
     runs-on: ubuntu-latest
