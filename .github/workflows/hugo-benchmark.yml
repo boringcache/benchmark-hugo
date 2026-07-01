@@ -116,38 +116,6 @@ jobs:
           cli_platform: linux-musl-amd64
           benchmark_workspace: ${{ github.repository }}
 
-  # No Docker +toolcache lanes here yet: Hugo's Dockerfile uses Go build cache
-  # mounts, while the Docker tool-cache adapter currently supports turbo/nx/
-  # sccache only. Do not add a fake lane that changes the build graph.
-  boringcache-native:
-    name: BC Native
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      BORINGCACHE_RESTORE_TOKEN: ${{ secrets.BORINGCACHE_RESTORE_TOKEN }}
-      BORINGCACHE_SAVE_TOKEN: ${{ secrets.BORINGCACHE_SAVE_TOKEN }}
-      BORINGCACHE_API_TOKEN: ${{ secrets.BORINGCACHE_API_TOKEN || secrets.BORINGCACHE_RESTORE_TOKEN }}
-    steps:
-      - name: Checkout benchmark repo
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-          submodules: false
-
-      - name: BC Native
-        uses: ./.github/actions/docker-rolling-benchmark
-        with:
-          strategy: boringcache
-          buildkit_backend: native
-          benchmark_id: hugo-native
-          project_repo: gohugoio/hugo
-          dockerfile_path: upstream/Dockerfile
-          docker_context: upstream
-          image_tag: hugo-benchmark:latest
-          cli_platform: linux-musl-amd64
-          benchmark_workspace: ${{ github.repository }}
-
   boringcache-buildkit-backend:
     name: BC BuildKit Backend
     if: ${{ github.event_name != 'pull_request' && (inputs.prewarm_buildkit_image || vars.HUGO_PREWARM_BUILDKIT_IMAGE) }}
