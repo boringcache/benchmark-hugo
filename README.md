@@ -25,7 +25,7 @@ Pinned upstream source:
 
 Fresh lane runs a no-prior-cache cold build plus one warm rerun on the same pinned source tree. Rolling lane records the upstream commit build as-is after each upstream sync against the prior rolling cache and skips `warm1`.
 
-BoringCache compares the explicit registry/OCI cache path and the managed BuildKit backend path. It does not call BoringCache inside Dockerfile `RUN` steps, and upstream Dockerfile cache mounts stay native to BuildKit. Docker tool-cache lanes are intentionally absent until Hugo has a static supported adapter for its in-Docker Go build cache shape.
+BoringCache uses its managed BuildKit backend as the single product lane and compares it with GitHub Actions Cache. It does not call BoringCache inside Dockerfile `RUN` steps, and upstream Dockerfile cache mounts stay native to BuildKit. Docker tool-cache lanes are intentionally absent until Hugo has a static supported adapter for its in-Docker Go build cache shape.
 
 ## Output
 
