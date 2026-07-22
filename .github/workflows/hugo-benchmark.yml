@@ -4,8 +4,13 @@ run-name: >-
 on:
   workflow_dispatch:
     inputs:
-      prewarm_buildkit_image:
-        description: "Optional BuildKit image. When set, the run adds a BC BuildKit backend lane."
+      buildkit_image:
+        description: "Optional managed BoringCache BuildKit image for canary runs."
+        required: false
+        type: string
+        default: ""
+      cli_version:
+        description: "Optional BoringCache CLI release tag for canary runs, for example vcli-canary."
         required: false
         type: string
         default: ""
@@ -72,38 +77,8 @@ jobs:
           image_tag: hugo-benchmark:latest
           benchmark_workspace: ${{ github.repository }}
 
-  boringcache-oci:
-    name: BC OCI
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      BORINGCACHE_RESTORE_TOKEN: ${{ secrets.BORINGCACHE_RESTORE_TOKEN }}
-      BORINGCACHE_SAVE_TOKEN: ${{ secrets.BORINGCACHE_SAVE_TOKEN }}
-      BORINGCACHE_API_TOKEN: ${{ secrets.BORINGCACHE_API_TOKEN || secrets.BORINGCACHE_RESTORE_TOKEN }}
-    steps:
-      - name: Checkout benchmark repo
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-          submodules: false
-
-      - name: BC OCI
-        uses: ./.github/actions/docker-rolling-benchmark
-        with:
-          strategy: boringcache
-          buildkit_backend: registry
-          benchmark_id: hugo${{ inputs.benchmark_id_suffix }}
-          project_repo: gohugoio/hugo
-          dockerfile_path: upstream/Dockerfile
-          docker_context: upstream
-          image_tag: hugo-benchmark:latest
-          cli_platform: ${{ inputs.cli_platform }}
-          benchmark_workspace: ${{ github.repository }}
-
-  boringcache-buildkit-backend:
-    name: BC BuildKit Backend
+  boringcache:
+    name: BoringCache
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
@@ -121,17 +96,16 @@ jobs:
           fetch-depth: 1
           submodules: false
 
-      - name: BC BuildKit Backend
+      - name: BoringCache
         uses: ./.github/actions/docker-rolling-benchmark
         with:
           strategy: boringcache
-          buildkit_backend: registry
-          benchmark_id: hugo-bc-buildkit${{ inputs.benchmark_id_suffix }}
+          benchmark_id: hugo${{ inputs.benchmark_id_suffix }}
           project_repo: gohugoio/hugo
           dockerfile_path: upstream/Dockerfile
           docker_context: upstream
           image_tag: hugo-benchmark:latest
           cli_platform: ${{ inputs.cli_platform }}
-          buildkit_image: ${{ inputs.prewarm_buildkit_image || vars.HUGO_PREWARM_BUILDKIT_IMAGE || 'ghcr.io/boringcache/buildkit:v0.30.0-bc' }}
+          cli_version: ${{ inputs.cli_version }}
+          buildkit_image: ${{ inputs.buildkit_image || 'ghcr.io/boringcache/buildkit:v0.30.0-bc' }}
           benchmark_workspace: ${{ github.repository }}
-          buildkit_cache_backend: boringcache
