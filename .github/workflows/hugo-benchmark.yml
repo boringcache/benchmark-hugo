@@ -106,5 +106,5 @@ jobs:
           image_tag: hugo-benchmark:latest
           cli_platform: ${{ inputs.cli_platform }}
           cli_version: ${{ inputs.cli_version }}
-          buildkit_image: ${{ inputs.buildkit_image || 'ghcr.io/boringcache/buildkit:v0.30.0-bc' }}
+          buildkit_image: ${{ inputs.buildkit_image }}
           benchmark_workspace: ${{ github.repository }}
