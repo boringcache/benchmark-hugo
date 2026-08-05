@@ -11,26 +11,22 @@ on:
         type: string
         default: ""
       cli_version:
-        description: "Optional BoringCache CLI release tag for canary runs, for example vcli-canary."
+        description: "Optional exact BoringCache CLI release tag."
         required: false
         type: string
         default: ""
       cli_platform:
-        description: "Optional BoringCache CLI platform. Canary currently publishes linux-amd64."
+        description: "Optional BoringCache CLI platform."
         required: false
         type: string
-        default: linux-musl-amd64
+        default: linux-amd64
       benchmark_id_suffix:
-        description: "Optional suffix appended to built-in benchmark/cache scopes for isolated comparison runs."
+        description: "Optional suffix for an isolated comparison run."
         required: false
         type: string
         default: ""
   schedule:
     - cron: "0 3 * * 1"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref_name }}
-  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -38,33 +34,22 @@ permissions:
   packages: read
 
 jobs:
-  github-actions-cache:
-    name: GHA
-    uses: ./.github/workflows/reusable-docker-buildkit-benchmark.yml
+  benchmark:
+    name: ${{ matrix.label }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: GHA
+            strategy: actions-cache
+          - label: BoringCache
+            strategy: boringcache
+    uses: ./.github/workflows/reusable-hugo-docker-benchmark.yml
     with:
-      strategy: actions-cache
+      strategy: ${{ matrix.strategy }}
       cache_lane: fresh
       benchmark_id: ${{ format('hugo{0}', inputs.benchmark_id_suffix) }}
-      project_repo: gohugoio/hugo
-      dockerfile_path: upstream/Dockerfile
-      docker_context: upstream
-      image_tag: hugo-benchmark:latest
-      benchmark_workspace: ${{ github.repository }}
-    secrets: inherit
-
-  boringcache:
-    name: BoringCache
-    uses: ./.github/workflows/reusable-docker-buildkit-benchmark.yml
-    with:
-      strategy: boringcache
-      cache_lane: fresh
-      benchmark_id: ${{ format('hugo{0}', inputs.benchmark_id_suffix) }}
-      project_repo: gohugoio/hugo
-      dockerfile_path: upstream/Dockerfile
-      docker_context: upstream
-      image_tag: hugo-benchmark:latest
-      cli_platform: linux-amd64
       cli_version: ${{ inputs.cli_version }}
+      cli_platform: ${{ inputs.cli_platform }}
       buildkit_image: ${{ inputs.buildkit_image }}
-      benchmark_workspace: ${{ github.repository }}
     secrets: inherit
