@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/hugo-docker-benchmark
-        with: {strategy: "${{ matrix.strategy }}", cache_lane: rolling, phase: publish, benchmark_id: "${{ format('hugo{0}', inputs.benchmark_id_suffix) }}", cli_version: "${{ inputs.cli_version }}", cli_platform: "${{ inputs.cli_platform }}", buildkit_image: "${{ inputs.buildkit_image }}"}
+        with: {strategy: "${{ matrix.strategy }}", cache_lane: rolling, phase: publish, benchmark_id: "${{ format('hugo{0}', inputs.benchmark_id_suffix) }}", cli_version: "${{ inputs.cli_version }}", cli_platform: "${{ inputs.cli_platform }}", buildkit_image: "${{ inputs.buildkit_image }}", push_image: "true"}
   report:
     name: Hugo Docker rolling report
     needs: commit
