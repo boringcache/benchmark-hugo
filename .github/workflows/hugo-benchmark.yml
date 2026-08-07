@@ -49,7 +49,6 @@ jobs:
       - name: Publish the Hugo Docker benchmark report
         run: |
           python3 ./scripts/benchmark-report.py summarize \
-            --benchmark "$BENCHMARK_ID" \
             --title "Hugo Docker rolling benchmark" \
             --input-dir phase-evidence \
             --output-dir benchmark-results
