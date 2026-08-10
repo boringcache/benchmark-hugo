@@ -80,7 +80,6 @@ runs:
       with:
         context: upstream
         file: upstream/Dockerfile
-        platforms: linux/amd64,linux/arm64
         tags: ghcr.io/${{ github.repository_owner }}/hugo-benchmark:actions-cache
         push: ${{ inputs.push_image == 'true' && github.ref == 'refs/heads/main' }}
         build-args: HUGO_BUILD_TAGS=extended,withdeploy
@@ -103,7 +102,6 @@ runs:
         image: ghcr.io/${{ github.repository_owner }}/hugo-benchmark
         tags: boringcache
         push: ${{ inputs.push_image == 'true' && github.ref == 'refs/heads/main' }}
-        platforms: linux/amd64,linux/arm64
         build-args: HUGO_BUILD_TAGS=extended,withdeploy
         provenance: true
         sbom: true
@@ -126,7 +124,6 @@ runs:
         image: ghcr.io/${{ github.repository_owner }}/hugo-benchmark
         tags: boringcache
         push: ${{ inputs.push_image == 'true' && github.ref == 'refs/heads/main' }}
-        platforms: linux/amd64,linux/arm64
         build-args: HUGO_BUILD_TAGS=extended,withdeploy
         provenance: true
         sbom: true
