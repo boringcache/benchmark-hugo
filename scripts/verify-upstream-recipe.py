@@ -16,13 +16,16 @@ def main() -> int:
     try:
         command = tomllib.loads((ROOT / ".boringcache.toml").read_text())["adapters"]["docker"]["command"]
         require(command == EXPECTED, "Docker plan changed")
+        activation = (ROOT / "scripts/activate-docker-plan.py").read_text()
+        require('"--push"' in activation and "hugo-benchmark:local" in activation, "Docker plan activation changed")
         upstream = (ROOT / "upstream/.github/workflows/image.yml").read_text()
         for fragment in ("context: .", "provenance: mode=max", "sbom: true", "platforms: linux/amd64,linux/arm64", "build-args: HUGO_BUILD_TAGS=extended,withdeploy", "push: ${{ github.event_name != 'pull_request' }}"):
             require(fragment in upstream, f"upstream image job changed: {fragment}")
         action = (ROOT / ".github/actions/hugo-docker-benchmark/action.yml").read_text()
         require("platforms:" not in action, "benchmark must use the runner's native platform")
-        require(action.count("HUGO_BUILD_TAGS=extended,withdeploy") == 3, "provider tags drifted")
-        require(action.count("sbom: true") == 3, "provider SBOM output drifted")
+        require(action.count("HUGO_BUILD_TAGS=extended,withdeploy") == 1, "Actions/cache tags drifted")
+        require(action.count("sbom: true") == 1, "Actions/cache SBOM output drifted")
+        require(action.count("Activate the BoringCache Docker plan") == 1, "BoringCache publication projection changed")
     except (KeyError, OSError, RuntimeError, tomllib.TOMLDecodeError) as error:
         print(f"Hugo recipe mismatch: {error}", file=sys.stderr)
         return 1
