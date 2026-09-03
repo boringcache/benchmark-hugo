@@ -1,0 +1,14 @@
+workspace = "boringcache/benchmark-hugo"
+
+[adapters.docker]
+tag = "hugo-docker-local"
+metadata-hints = ["benchmark=hugo", "upstream-job=build-and-push"]
+command = [
+  "docker", "buildx", "build",
+  "--file", "upstream/Dockerfile",
+  "--build-arg", "HUGO_BUILD_TAGS=extended,withdeploy",
+  "--provenance", "mode=max",
+  "--sbom", "true",
+  "--tag", "hugo-benchmark:local",
+  "upstream",
+]
